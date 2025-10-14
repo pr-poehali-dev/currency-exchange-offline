@@ -26,22 +26,22 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     if method == 'GET':
         base_rates = {
-            'USDT-RUB': 92.5,
-            'USDT-EUR-CASH': 0.92,
-            'USDT-EUR-CARD': 0.91,
-            'RUB-EUR-CASH': 0.0099,
-            'RUB-EUR-CARD': 0.0098,
-            'RUB-USDT': 0.0108,
-            'EUR-CASH-USDT': 1.087,
-            'EUR-CASH-RUB': 101.2,
-            'EUR-CARD-USDT': 1.099,
-            'EUR-CARD-RUB': 102.1,
+            'USDT-RUB': 98.50,
+            'USDT-EUR-CASH': 0.94,
+            'USDT-EUR-CARD': 0.95,
+            'RUB-EUR-CASH': 0.0095,
+            'RUB-EUR-CARD': 0.0096,
+            'RUB-USDT': 0.0101,
+            'EUR-CASH-USDT': 1.06,
+            'EUR-CASH-RUB': 105.26,
+            'EUR-CARD-USDT': 1.05,
+            'EUR-CARD-RUB': 104.16,
         }
         
         rates = {}
         for key, base_rate in base_rates.items():
-            variation = random.uniform(-0.02, 0.02)
-            rates[key] = round(base_rate * (1 + variation), 4)
+            variation = random.uniform(-0.005, 0.005)
+            rates[key] = round(base_rate * (1 + variation), 2)
         
         top_rates = [
             {
@@ -49,28 +49,28 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'to': 'RUB',
                 'rate': rates['USDT-RUB'],
                 'trend': random.choice(['up', 'down']),
-                'change': round(random.uniform(-0.5, 0.5), 2)
+                'change': round(random.uniform(-0.3, 0.3), 1)
             },
             {
                 'from': 'USDT',
                 'to': 'EUR (нал)',
                 'rate': rates['USDT-EUR-CASH'],
                 'trend': random.choice(['up', 'down']),
-                'change': round(random.uniform(-0.5, 0.5), 2)
-            },
-            {
-                'from': 'RUB',
-                'to': 'EUR (безнал)',
-                'rate': rates['RUB-EUR-CARD'],
-                'trend': random.choice(['up', 'down']),
-                'change': round(random.uniform(-0.5, 0.5), 2)
+                'change': round(random.uniform(-0.3, 0.3), 1)
             },
             {
                 'from': 'EUR (нал)',
                 'to': 'RUB',
                 'rate': rates['EUR-CASH-RUB'],
                 'trend': random.choice(['up', 'down']),
-                'change': round(random.uniform(-0.5, 0.5), 2)
+                'change': round(random.uniform(-0.3, 0.3), 1)
+            },
+            {
+                'from': 'RUB',
+                'to': 'USDT',
+                'rate': rates['RUB-USDT'],
+                'trend': random.choice(['up', 'down']),
+                'change': round(random.uniform(-0.3, 0.3), 1)
             }
         ]
         

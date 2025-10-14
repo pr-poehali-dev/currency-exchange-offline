@@ -230,7 +230,7 @@ const Index = () => {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-bold text-lg">{rate.rate.toFixed(4)}</div>
+                      <div className="font-bold text-lg">{rate.rate.toFixed(2)}</div>
                       <div className={`flex items-center gap-1 text-xs ${rate.trend === 'up' ? 'text-green-500' : 'text-red-500'}`}>
                         <Icon name={rate.trend === 'up' ? 'TrendingUp' : 'TrendingDown'} size={14} />
                         {rate.change > 0 ? '+' : ''}{rate.change}%
