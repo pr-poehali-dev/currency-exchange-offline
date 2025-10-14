@@ -287,6 +287,101 @@ const Index = () => {
             </Card>
           ))}
         </div>
+
+        <Card className="p-8 bg-card/50 backdrop-blur-sm border-border/50 mb-16">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold mb-2">Наши офисы</h2>
+            <p className="text-muted-foreground">Приходите лично для быстрого обмена валюты</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="p-6 rounded-lg bg-background/50 border border-border/50">
+              <div className="flex items-start gap-4">
+                <div className="p-3 bg-primary/20 rounded-lg">
+                  <Icon name="Building2" className="text-primary" size={24} />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold mb-3">Центральный офис</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-start gap-2">
+                      <Icon name="MapPin" size={16} className="text-gold mt-0.5" />
+                      <span>г. Москва, ул. Тверская, д. 15, офис 301</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Icon name="Clock" size={16} className="text-gold mt-0.5" />
+                      <span>Пн-Пт: 9:00-20:00 • Сб-Вс: 10:00-18:00</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Icon name="Phone" size={16} className="text-gold mt-0.5" />
+                      <span>+7 (495) 123-45-67</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 rounded-lg bg-background/50 border border-border/50">
+              <div className="flex items-start gap-4">
+                <div className="p-3 bg-gold/20 rounded-lg">
+                  <Icon name="Building2" className="text-gold" size={24} />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold mb-3">Офис на Арбате</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-start gap-2">
+                      <Icon name="MapPin" size={16} className="text-primary mt-0.5" />
+                      <span>г. Москва, ул. Арбат, д. 28, офис 102</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Icon name="Clock" size={16} className="text-primary mt-0.5" />
+                      <span>Пн-Пт: 10:00-21:00 • Сб-Вс: 11:00-19:00</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Icon name="Phone" size={16} className="text-primary mt-0.5" />
+                      <span>+7 (495) 987-65-43</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-8 bg-gradient-to-br from-primary/10 to-gold/10 border-primary/30">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold mb-2">Свяжитесь с нами</h2>
+            <p className="text-muted-foreground">Мы всегда на связи и готовы помочь</p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="flex flex-col items-center text-center">
+              <div className="p-4 bg-primary/20 rounded-full mb-4">
+                <Icon name="Phone" className="text-primary" size={28} />
+              </div>
+              <h3 className="font-bold mb-2">Телефон</h3>
+              <p className="text-sm text-muted-foreground mb-1">Звоните круглосуточно</p>
+              <p className="font-semibold">+7 (999) 123-45-67</p>
+            </div>
+
+            <div className="flex flex-col items-center text-center">
+              <div className="p-4 bg-gold/20 rounded-full mb-4">
+                <Icon name="MessageCircle" className="text-gold" size={28} />
+              </div>
+              <h3 className="font-bold mb-2">Telegram</h3>
+              <p className="text-sm text-muted-foreground mb-1">Онлайн-поддержка 24/7</p>
+              <p className="font-semibold">@crypto_exchange_bot</p>
+            </div>
+
+            <div className="flex flex-col items-center text-center">
+              <div className="p-4 bg-cyan/20 rounded-full mb-4">
+                <Icon name="Mail" className="text-cyan" size={28} />
+              </div>
+              <h3 className="font-bold mb-2">Email</h3>
+              <p className="text-sm text-muted-foreground mb-1">Ответим в течение часа</p>
+              <p className="font-semibold">info@crypto-ex.ru</p>
+            </div>
+          </div>
+        </Card>
       </div>
     </div>
   );
