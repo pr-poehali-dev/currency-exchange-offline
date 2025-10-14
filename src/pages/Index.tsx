@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,23 +11,28 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+interface ExchangeRate {
+  from: string;
+  to: string;
+  rate: number;
+  trend: 'up' | 'down';
+  change: number;
+}
+
+interface RatesData {
+  rates: Record<string, number>;
+  topRates: ExchangeRate[];
+  updatedAt: string;
+  nextUpdate: number;
+}
+
 const Index = () => {
   const [fromCurrency, setFromCurrency] = useState('USDT');
   const [toCurrency, setToCurrency] = useState('RUB');
   const [amount, setAmount] = useState('1000');
-
-  const exchangeRates = {
-    'USDT-RUB': 92.5,
-    'USDT-EUR-CASH': 0.92,
-    'USDT-EUR-CARD': 0.91,
-    'RUB-EUR-CASH': 0.0099,
-    'RUB-EUR-CARD': 0.0098,
-    'RUB-USDT': 0.0108,
-    'EUR-CASH-USDT': 1.087,
-    'EUR-CASH-RUB': 101.2,
-    'EUR-CARD-USDT': 1.099,
-    'EUR-CARD-RUB': 102.1,
-  };
+  const [ratesData, setRatesData] = useState<RatesData | null>(null);
+  const [lastUpdate, setLastUpdate] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(true);
 
   const currencies = [
     { value: 'USDT', label: 'USDT', icon: 'Bitcoin' },
@@ -36,9 +41,33 @@ const Index = () => {
     { value: 'EUR-CARD', label: 'Евро (безнал)', icon: 'CreditCard' },
   ];
 
+  const fetchRates = async () => {
+    try {
+      const response = await fetch('https://functions.poehali.dev/7d259103-a7c3-45e2-b751-fa595bf6ab49');
+      const data = await response.json();
+      setRatesData(data);
+      setLastUpdate(new Date(data.updatedAt).toLocaleTimeString('ru-RU'));
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Ошибка загрузки курсов:', error);
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRates();
+    
+    const interval = setInterval(() => {
+      fetchRates();
+    }, 30 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   const getRate = (from: string, to: string): number => {
+    if (!ratesData) return 1;
     const key = `${from}-${to}`;
-    return exchangeRates[key as keyof typeof exchangeRates] || 1;
+    return ratesData.rates[key] || 1;
   };
 
   const calculateExchange = () => {
@@ -52,13 +81,6 @@ const Index = () => {
     setToCurrency(fromCurrency);
   };
 
-  const topRates = [
-    { from: 'USDT', to: 'RUB', rate: 92.5, trend: 'up' },
-    { from: 'USDT', to: 'EUR (нал)', rate: 0.92, trend: 'down' },
-    { from: 'RUB', to: 'EUR (безнал)', rate: 0.0098, trend: 'up' },
-    { from: 'EUR (нал)', to: 'RUB', rate: 101.2, trend: 'up' },
-  ];
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-dark-blue to-background">
       <div className="container mx-auto px-4 py-8">
@@ -69,6 +91,12 @@ const Index = () => {
           <p className="text-xl text-muted-foreground">
             Офлайн обмен USDT • Рубль • Евро
           </p>
+          {lastUpdate && (
+            <p className="text-sm text-muted-foreground mt-2 flex items-center justify-center gap-2">
+              <Icon name="Clock" size={14} />
+              Обновлено: {lastUpdate}
+            </p>
+          )}
         </header>
 
         <div className="grid lg:grid-cols-2 gap-8 mb-16">
@@ -125,7 +153,7 @@ const Index = () => {
                 <div className="flex gap-3">
                   <Input
                     type="text"
-                    value={calculateExchange()}
+                    value={isLoading ? '...' : calculateExchange()}
                     readOnly
                     className="text-2xl font-semibold h-14 bg-primary/10 border-primary/30"
                   />
@@ -151,11 +179,15 @@ const Index = () => {
                 <div className="flex justify-between text-sm text-muted-foreground mb-4">
                   <span>Курс обмена</span>
                   <span className="font-semibold text-primary">
-                    1 {fromCurrency} = {getRate(fromCurrency, toCurrency).toFixed(4)} {toCurrency}
+                    {isLoading ? '...' : `1 ${fromCurrency} = ${getRate(fromCurrency, toCurrency).toFixed(4)} ${toCurrency}`}
                   </span>
                 </div>
-                <Button className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-cyan to-primary hover:opacity-90 transition-opacity">
-                  Обменять
+                <Button 
+                  className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-cyan to-primary hover:opacity-90 transition-opacity"
+                  onClick={fetchRates}
+                >
+                  <Icon name="RefreshCw" size={20} className="mr-2" />
+                  Обновить курсы
                 </Button>
               </div>
             </div>
@@ -170,43 +202,50 @@ const Index = () => {
             </div>
 
             <div className="space-y-4">
-              {topRates.map((rate, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between p-4 rounded-lg bg-background/50 border border-border/50 hover:border-primary/50 transition-all duration-300 hover:scale-[1.02]"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center font-bold text-primary">
-                        {rate.from.substring(0, 1)}
-                      </div>
-                      <Icon name="ArrowRight" size={16} className="text-muted-foreground" />
-                      <div className="w-10 h-10 rounded-full bg-gold/20 flex items-center justify-center font-bold text-gold">
-                        {rate.to.substring(0, 1)}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="font-semibold text-sm">
-                        {rate.from} → {rate.to}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-bold text-lg">{rate.rate}</div>
-                    <div className={`flex items-center gap-1 text-xs ${rate.trend === 'up' ? 'text-green-500' : 'text-red-500'}`}>
-                      <Icon name={rate.trend === 'up' ? 'TrendingUp' : 'TrendingDown'} size={14} />
-                      {rate.trend === 'up' ? '+0.3%' : '-0.2%'}
-                    </div>
-                  </div>
+              {isLoading ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Icon name="Loader2" size={32} className="animate-spin mx-auto mb-2" />
+                  Загрузка курсов...
                 </div>
-              ))}
+              ) : (
+                ratesData?.topRates.map((rate, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-4 rounded-lg bg-background/50 border border-border/50 hover:border-primary/50 transition-all duration-300 hover:scale-[1.02]"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center font-bold text-primary">
+                          {rate.from.substring(0, 1)}
+                        </div>
+                        <Icon name="ArrowRight" size={16} className="text-muted-foreground" />
+                        <div className="w-10 h-10 rounded-full bg-gold/20 flex items-center justify-center font-bold text-gold">
+                          {rate.to.substring(0, 1)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="font-semibold text-sm">
+                          {rate.from} → {rate.to}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-bold text-lg">{rate.rate.toFixed(4)}</div>
+                      <div className={`flex items-center gap-1 text-xs ${rate.trend === 'up' ? 'text-green-500' : 'text-red-500'}`}>
+                        <Icon name={rate.trend === 'up' ? 'TrendingUp' : 'TrendingDown'} size={14} />
+                        {rate.change > 0 ? '+' : ''}{rate.change}%
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
 
             <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-primary/10 to-gold/10 border border-primary/30">
               <div className="flex items-start gap-3">
                 <Icon name="Info" className="text-primary mt-1" size={20} />
                 <div className="text-sm">
-                  <p className="font-semibold mb-1">Курсы обновляются каждые 5 минут</p>
+                  <p className="font-semibold mb-1">Курсы обновляются каждые 30 минут</p>
                   <p className="text-muted-foreground">Офлайн обмен доступен в наших офисах</p>
                 </div>
               </div>
