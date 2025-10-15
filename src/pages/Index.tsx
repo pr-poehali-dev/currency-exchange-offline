@@ -43,11 +43,18 @@ const Index = () => {
 
   const fetchRates = async () => {
     try {
-      const response = await fetch('https://functions.poehali.dev/7d259103-a7c3-45e2-b751-fa595bf6ab49');
+      const response = await fetch(`https://functions.poehali.dev/7d259103-a7c3-45e2-b751-fa595bf6ab49?t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      });
       const data = await response.json();
       setRatesData(data);
       setLastUpdate(new Date(data.updatedAt).toLocaleTimeString('ru-RU'));
       setIsLoading(false);
+      console.log('Курсы обновлены:', data.rates);
     } catch (error) {
       console.error('Ошибка загрузки курсов:', error);
       setIsLoading(false);
