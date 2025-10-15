@@ -26,23 +26,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     if method == 'GET':
-        usdt_to_rub = fetch_binance_p2p_rate()
-        
-        usd_to_eur = fetch_coingecko_rate('usd', 'eur')
-        usd_to_rub = fetch_coingecko_rate('usd', 'rub')
-        
-        eur_to_rub = usd_to_rub / usd_to_eur if usd_to_eur > 0 else 110.0
+        usdt_to_rub = fetch_usdt_rub_rate()
+        usdt_to_eur = fetch_usdt_eur_rate()
+        eur_to_rub = fetch_eur_rub_rate()
         
         rates = {
             'USDT-RUB': round(usdt_to_rub, 2),
-            'USDT-EUR-CASH': round(1 / usd_to_eur * 0.98, 4),
-            'USDT-EUR-CARD': round(1 / usd_to_eur, 4),
+            'USDT-EUR-CASH': round(usdt_to_eur * 0.98, 4),
+            'USDT-EUR-CARD': round(usdt_to_eur, 4),
             'RUB-EUR-CASH': round(1 / eur_to_rub * 0.98, 6),
             'RUB-EUR-CARD': round(1 / eur_to_rub, 6),
             'RUB-USDT': round(1 / usdt_to_rub, 6),
-            'EUR-CASH-USDT': round(usd_to_eur * 1.02, 4),
+            'EUR-CASH-USDT': round(1 / usdt_to_eur * 1.02, 4),
             'EUR-CASH-RUB': round(eur_to_rub * 0.98, 2),
-            'EUR-CARD-USDT': round(usd_to_eur, 4),
+            'EUR-CARD-USDT': round(1 / usdt_to_eur, 4),
             'EUR-CARD-RUB': round(eur_to_rub, 2),
         }
         
@@ -82,12 +79,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'topRates': top_rates,
             'updatedAt': datetime.utcnow().isoformat() + 'Z',
             'nextUpdate': 300,
-            'source': 'live',
-            'debug': {
-                'usdt_rub': usdt_to_rub,
-                'usd_eur': usd_to_eur,
-                'usd_rub': usd_to_rub
-            }
+            'source': 'live'
         }
         
         return {
@@ -111,47 +103,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     }
 
 
-def fetch_binance_p2p_rate() -> float:
+def fetch_usdt_rub_rate() -> float:
     try:
-        url = 'https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search'
-        data = json.dumps({
-            "fiat": "RUB",
-            "page": 1,
-            "rows": 10,
-            "tradeType": "SELL",
-            "asset": "USDT",
-            "countries": [],
-            "proMerchantAds": False,
-            "shieldMerchantAds": False,
-            "publisherType": None,
-            "payTypes": []
-        }).encode('utf-8')
-        
-        headers = {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-        
-        req = urllib.request.Request(url, data=data, headers=headers, method='POST')
-        
-        with urllib.request.urlopen(req, timeout=10) as response:
-            result = json.loads(response.read().decode('utf-8'))
-            
-            if result.get('data') and len(result['data']) > 0:
-                prices = [float(ad['adv']['price']) for ad in result['data'][:10]]
-                avg_price = sum(prices) / len(prices)
-                return round(avg_price, 2)
-    except Exception as e:
-        pass
-    
-    return fetch_garantex_rate()
-
-
-def fetch_garantex_rate() -> float:
-    try:
-        url = 'https://garantex.org/api/v2/depth?market=usdtrub'
-        
+        url = 'https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=rub'
         req = urllib.request.Request(url, headers={
             'User-Agent': 'Mozilla/5.0',
             'Accept': 'application/json'
@@ -159,20 +113,32 @@ def fetch_garantex_rate() -> float:
         
         with urllib.request.urlopen(req, timeout=10) as response:
             data = json.loads(response.read().decode('utf-8'))
-            
+            if 'tether' in data and 'rub' in data['tether']:
+                return float(data['tether']['rub'])
+    except Exception:
+        pass
+    
+    try:
+        url = 'https://garantex.org/api/v2/depth?market=usdtrub&limit=5'
+        req = urllib.request.Request(url, headers={
+            'User-Agent': 'Mozilla/5.0',
+            'Accept': 'application/json'
+        })
+        
+        with urllib.request.urlopen(req, timeout=10) as response:
+            data = json.loads(response.read().decode('utf-8'))
             if data.get('asks') and len(data['asks']) > 0:
-                best_ask = float(data['asks'][0]['price'])
-                return round(best_ask, 2)
+                prices = [float(ask['price']) for ask in data['asks'][:3]]
+                return sum(prices) / len(prices)
     except Exception:
         pass
     
-    return 96.50
+    return 96.5
 
 
-def fetch_coingecko_rate(from_currency: str, to_currency: str) -> float:
+def fetch_usdt_eur_rate() -> float:
     try:
-        url = f'https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies={to_currency}'
-        
+        url = 'https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=eur'
         req = urllib.request.Request(url, headers={
             'User-Agent': 'Mozilla/5.0',
             'Accept': 'application/json'
@@ -180,25 +146,48 @@ def fetch_coingecko_rate(from_currency: str, to_currency: str) -> float:
         
         with urllib.request.urlopen(req, timeout=10) as response:
             data = json.loads(response.read().decode('utf-8'))
-            
-            if 'tether' in data and to_currency in data['tether']:
-                return float(data['tether'][to_currency])
+            if 'tether' in data and 'eur' in data['tether']:
+                return float(data['tether']['eur'])
     except Exception:
         pass
     
     try:
-        url = f'https://api.exchangerate-api.com/v4/latest/{from_currency.upper()}'
-        
+        url = 'https://api.exchangerate-api.com/v4/latest/USD'
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
         
         with urllib.request.urlopen(req, timeout=10) as response:
             data = json.loads(response.read().decode('utf-8'))
-            return data['rates'].get(to_currency.upper(), 1.0)
+            eur_rate = data['rates'].get('EUR', 0.92)
+            return eur_rate
     except Exception:
         pass
     
-    defaults = {
-        ('usd', 'eur'): 0.92,
-        ('usd', 'rub'): 96.50
-    }
-    return defaults.get((from_currency, to_currency), 1.0)
+    return 0.92
+
+
+def fetch_eur_rub_rate() -> float:
+    try:
+        url = 'https://api.exchangerate-api.com/v4/latest/EUR'
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        
+        with urllib.request.urlopen(req, timeout=10) as response:
+            data = json.loads(response.read().decode('utf-8'))
+            return data['rates'].get('RUB', 105.0)
+    except Exception:
+        pass
+    
+    try:
+        url = 'https://api.coingecko.com/api/v3/simple/price?ids=euro-coin&vs_currencies=rub'
+        req = urllib.request.Request(url, headers={
+            'User-Agent': 'Mozilla/5.0',
+            'Accept': 'application/json'
+        })
+        
+        with urllib.request.urlopen(req, timeout=10) as response:
+            data = json.loads(response.read().decode('utf-8'))
+            if 'euro-coin' in data and 'rub' in data['euro-coin']:
+                return float(data['euro-coin']['rub'])
+    except Exception:
+        pass
+    
+    return 105.0
