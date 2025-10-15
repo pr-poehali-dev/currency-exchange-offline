@@ -74,7 +74,10 @@ const Index = () => {
   const getRate = (from: string, to: string): number => {
     if (!ratesData) return 1;
     const key = `${from}-${to}`;
-    return ratesData.rates[key] || 1;
+    console.log('Ищу курс:', key, 'Доступные ключи:', Object.keys(ratesData.rates));
+    const rate = ratesData.rates[key];
+    console.log('Найденный курс:', rate);
+    return rate || 1;
   };
 
   const calculateExchange = () => {
