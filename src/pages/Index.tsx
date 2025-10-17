@@ -43,20 +43,32 @@ const Index = () => {
 
   const fetchRates = async () => {
     try {
-      const response = await fetch(`https://functions.poehali.dev/7d259103-a7c3-45e2-b751-fa595bf6ab49?t=${Date.now()}`, {
+      const url = `https://functions.poehali.dev/7d259103-a7c3-45e2-b751-fa595bf6ab49?t=${Date.now()}`;
+      console.log('🔄 Запрашиваю курсы:', url);
+      
+      const response = await fetch(url, {
         cache: 'no-store',
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
           'Pragma': 'no-cache'
         }
       });
+      
+      console.log('📡 Ответ получен, статус:', response.status);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
       const data = await response.json();
+      console.log('✅ Данные распарсены:', data);
+      
       setRatesData(data);
       setLastUpdate(new Date(data.updatedAt).toLocaleTimeString('ru-RU'));
       setIsLoading(false);
-      console.log('Курсы обновлены:', data.rates);
+      console.log('💰 Курсы установлены:', data.rates);
     } catch (error) {
-      console.error('Ошибка загрузки курсов:', error);
+      console.error('❌ Ошибка загрузки курсов:', error);
       setIsLoading(false);
     }
   };
